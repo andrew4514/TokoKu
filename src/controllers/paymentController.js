@@ -1,4 +1,4 @@
-import prisma from "../../api/db";
+import prisma from "../../api/db.js";
 import crypto from "crypto";
 
 const handleNotification = async (req, res) => {
