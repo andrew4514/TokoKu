@@ -15,9 +15,12 @@ export default function Home({ addToCart }) {
   const fetchProducts = async () => {
     try {
       const res = await API.get(`/products?search=${search}`);
-      setProducts(res.data.data);
+
+      const resultData = res.data?.data || res.data;
+      setProducts(Array.isArray(resultData) ? resultData : []);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]); 
     } finally {
       setLoading(false);
     }
