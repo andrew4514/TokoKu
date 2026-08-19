@@ -25,7 +25,7 @@ const handleNotification = async (req, res) => {
         // A. Ambil data pesanan beserta itemnya
         const order = await tx.order.findUnique({
           where: { id: orderId },
-          include: { items: true },
+          include: { orderItems: true },
         });
 
         if (!order || order.status === "PAID") return; // Hindari eksekusi ganda
