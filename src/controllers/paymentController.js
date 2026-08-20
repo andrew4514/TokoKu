@@ -8,7 +8,7 @@ const handleNotification = async (req, res) => {
     const transactionStatus = notification.transaction_status;
     const fraudStatus = notification.fraud_status;
 
-    // 1. Verifikasi Signature Key (Keamanan)
+    
     const serverKey = process.env.MIDTRANS_SERVER_KEY;
     const hash = crypto.createHash("sha512").update(`${orderId}${notification.status_code}${notification.gross_amount}${serverKey}`).digest("hex");
 
@@ -16,7 +16,7 @@ const handleNotification = async (req, res) => {
       return res.status(400).json({ message: "Invalid signature" });
     }
 
-    // 2. Cek apakah pembayaran berhasil
+   
     const isSuccess = transactionStatus === "settlement" || (transactionStatus === "capture" && fraudStatus === "accept");
 
     if (isSuccess) {
@@ -28,21 +28,20 @@ const handleNotification = async (req, res) => {
           include: { orderItems: true },
         });
 
-        if (!order || order.status === "PAID") return; // Hindari eksekusi ganda
+        if (!order || order.status === "PAID") return; 
 
-        // B. Update status pesanan menjadi PAID
+        
         await tx.order.update({
           where: { id: orderId },
           data: { status: "PAID" },
         });
 
-        // C. Kurangi stok setiap produk yang dibeli
-        for (const item of order.items) {
+        for (const item of order.orderItems) {
           await tx.product.update({
             where: { id: item.productId },
             data: {
               stock: {
-                decrement: item.quantity, // Mengurangi stok secara otomatis
+                decrement: item.quantity, 
               },
             },
           });
