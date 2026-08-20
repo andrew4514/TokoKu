@@ -7,6 +7,8 @@ const handleNotification = async (req, res) => {
     const orderId = notification.order_id;
     const transactionStatus = notification.transaction_status;
     const fraudStatus = notification.fraud_status;
+    const transactionId = notification.transaction_id;
+    const paymentType = notification.payment_type;
 
     
     const serverKey = process.env.MIDTRANS_SERVER_KEY;
@@ -20,9 +22,7 @@ const handleNotification = async (req, res) => {
     const isSuccess = transactionStatus === "settlement" || (transactionStatus === "capture" && fraudStatus === "accept");
 
     if (isSuccess) {
-      // Jalankan dalam Prisma Transaction agar aman
       await prisma.$transaction(async (tx) => {
-        // A. Ambil data pesanan beserta itemnya
         const order = await tx.order.findUnique({
           where: { id: orderId },
           include: { orderItems: true },
@@ -30,10 +30,17 @@ const handleNotification = async (req, res) => {
 
         if (!order || order.status === "PAID") return; 
 
-        
         await tx.order.update({
           where: { id: orderId },
           data: { status: "PAID" },
+        });
+
+        await tx.payment.update({
+          where: { orderId: orderId},
+          data: {
+            transactionId: transactionId,
+            paymentType: paymentType
+          }
         });
 
         for (const item of order.orderItems) {
